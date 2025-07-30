@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perceptron Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .panel h3 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+
+        #canvas {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: crosshair;
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            transition: border-color 0.3s ease;
+        }
+
+        #canvas:hover {
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .class-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .class-btn {
+            flex: 1;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .class-btn.active {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .stats {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-label {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .equation {
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .training-log {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-epoch {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .log-error {
+            color: #f56565;
+        }
+
+        .log-success {
+            color: #48bb78;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .instructions h4 {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            color: #718096;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Perceptron Interactive Demo</h1>
+        <p class="subtitle">Click to add points, train the perceptron, and watch it learn to classify!</p>
+        
+        <div class="instructions">
+            <h4>How to use:</h4>
+            <ol>
+                <li>Select a class (Blue or Red) and click on the canvas to add training points</li>
+                <li>Add several points of each class in different areas</li>
+                <li>Click "Train Perceptron" to watch it learn the decision boundary</li>
+                <li>Test with new points to see how well it classifies!</li>
+            </ol>
+        </div>
+
+        <div class="demo-grid">
+            <div class="panel">
+                <h3>Training Canvas</h3>
+                <canvas id="canvas" width="400" height="400"></canvas>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <span>Add points as:</span>
+                        <div class="class-buttons">
+                            <button class="class-btn active" id="classBlue">Class 0 (Blue)</button>
+                            <button class="class-btn" id="classRed">Class 1 (Red)</button>
+                        </div>
+                    </div>
+                    
+                    <button id="trainBtn">Train Perceptron</button>
+                    <button id="clearBtn">Clear All</button>
+                    <button id="testBtn">Test Mode</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Training Points:</span>
+                        <span class="stat-value" id="pointCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Epochs:</span>
+                        <span class="stat-value" id="epochCount">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Accuracy:</span>
+                        <span class="stat-value" id="accuracy">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Perceptron Details</h3>
+                
+                <div class="equation">
+                    <strong>Decision Function:</strong><br>
+                    output = sign(w₁×x + w₂×y + bias)
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Weight 1 (w₁):</span>
+                        <span class="stat-value" id="weight1">0.000</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Weight 2 (w₂):</span>
+                        <span class="stat-value" id="weight2">0.000</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Bias:</span>
+                        <span class="stat-value" id="bias">0.000</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Learning Rate:</span>
+                        <span class="stat-value">0.1</span>
+                    </div>
+                </div>
+
+                <div class="training-log" id="trainingLog">
+                    <div class="log-entry">Ready to train! Add some points and click 'Train Perceptron'</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Perceptron {
+            constructor(learningRate = 0.1) {
+                this.weights = [Math.random() * 2 - 1, Math.random() * 2 - 1];
+                this.bias = Math.random() * 2 - 1;
+                this.learningRate = learningRate;
+            }
+
+            predict(inputs) {
+                const sum = inputs[0] * this.weights[0] + inputs[1] * this.weights[1] + this.bias;
+                return sum >= 0 ? 1 : 0;
+            }
+
+            train(trainingData, maxEpochs = 100) {
+                const log = [];
+                
+                for (let epoch = 0; epoch < maxEpochs; epoch++) {
+                    let errors = 0;
+                    
+                    for (let i = 0; i < trainingData.length; i++) {
+                        const inputs = trainingData[i].inputs;
+                        const target = trainingData[i].target;
+                        const prediction = this.predict(inputs);
+                        const error = target - prediction;
+                        
+                        if (error !== 0) {
+                            errors++;
+                            this.weights[0] += this.learningRate * error * inputs[0];
+                            this.weights[1] += this.learningRate * error * inputs[1];
+                            this.bias += this.learningRate * error;
+                        }
+                    }
+                    
+                    const accuracy = ((trainingData.length - errors) / trainingData.length * 100).toFixed(1);
+                    log.push({
+                        epoch: epoch + 1,
+                        errors: errors,
+                        accuracy: accuracy,
+                        weights: [...this.weights],
+                        bias: this.bias
+                    });
+                    
+                    if (errors === 0) {
+                        log.push({ message: `Converged after ${epoch + 1} epochs!`, type: 'success' });
+                        break;
+                    }
+                }
+                
+                return log;
+            }
+        }
+
+        // Canvas and UI setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const trainBtn = document.getElementById('trainBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const testBtn = document.getElementById('testBtn');
+        const classBlueBtn = document.getElementById('classBlue');
+        const classRedBtn = document.getElementById('classRed');
+        const trainingLog = document.getElementById('trainingLog');
+
+        let points = [];
+        let perceptron = new Perceptron();
+        let currentClass = 0;
+        let isTrained = false;
+        let isTestMode = false;
+
+        // Normalize coordinates to [-1, 1] range
+        function normalizeCoords(x, y) {
+            return [(x / canvas.width) * 2 - 1, (y / canvas.height) * 2 - 1];
+        }
+
+        function denormalizeCoords(x, y) {
+            return [((x + 1) / 2) * canvas.width, ((y + 1) / 2) * canvas.height];
+        }
+
+        function drawPoint(x, y, class_, isTest = false) {
+            ctx.beginPath();
+            ctx.arc(x, y, isTest ? 8 : 6, 0, 2 * Math.PI);
+            ctx.fillStyle = class_ === 0 ? '#3182ce' : '#e53e3e';
+            ctx.fill();
+            ctx.strokeStyle = isTest ? '#000' : 'white';
+            ctx.lineWidth = isTest ? 3 : 2;
+            ctx.stroke();
+        }
+
+        function drawDecisionBoundary() {
+            if (!isTrained) return;
+
+            ctx.strokeStyle = '#48bb78';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            
+            // Draw decision boundary line
+            // w₁x + w₂y + bias = 0
+            // y = -(w₁x + bias) / w₂
+            
+            const w1 = perceptron.weights[0];
+            const w2 = perceptron.weights[1];
+            const b = perceptron.bias;
+            
+            if (Math.abs(w2) > 0.001) {
+                const y1 = -(w1 * (-1) + b) / w2;
+                const y2 = -(w1 * (1) + b) / w2;
+                
+                const [x1_canvas, y1_canvas] = denormalizeCoords(-1, y1);
+                const [x2_canvas, y2_canvas] = denormalizeCoords(1, y2);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1_canvas, y1_canvas);
+                ctx.lineTo(x2_canvas, y2_canvas);
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+        }
+
+        function drawBackground() {
+            if (!isTrained) return;
+
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let x = 0; x < canvas.width; x += 2) {
+                for (let y = 0; y < canvas.height; y += 2) {
+                    const [nx, ny] = normalizeCoords(x, y);
+                    const prediction = perceptron.predict([nx, ny]);
+                    
+                    const color = prediction === 0 ? [49, 130, 206, 30] : [229, 62, 62, 30];
+                    
+                    for (let dx = 0; dx < 2 && x + dx < canvas.width; dx++) {
+                        for (let dy = 0; dy < 2 && y + dy < canvas.height; dy++) {
+                            const index = ((y + dy) * canvas.width + (x + dx)) * 4;
+                            data[index] = color[0];
+                            data[index + 1] = color[1];
+                            data[index + 2] = color[2];
+                            data[index + 3] = color[3];
+                        }
+                    }
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawDecisionBoundary();
+            
+            points.forEach(point => {
+                drawPoint(point.x, point.y, point.class);
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('pointCount').textContent = points.length;
+            document.getElementById('weight1').textContent = perceptron.weights[0].toFixed(3);
+            document.getElementById('weight2').textContent = perceptron.weights[1].toFixed(3);
+            document.getElementById('bias').textContent = perceptron.bias.toFixed(3);
+            
+            if (isTrained && points.length > 0) {
+                let correct = 0;
+                points.forEach(point => {
+                    const [nx, ny] = normalizeCoords(point.x, point.y);
+                    if (perceptron.predict([nx, ny]) === point.class) correct++;
+                });
+                document.getElementById('accuracy').textContent = (correct / points.length * 100).toFixed(1) + '%';
+            } else {
+                document.getElementById('accuracy').textContent = 'N/A';
+            }
+            
+            document.getElementById('epochCount').textContent = isTrained ? 'Complete' : '0';
+        }
+
+        function logMessage(message, type = 'normal') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = message;
+            trainingLog.appendChild(entry);
+            trainingLog.scrollTop = trainingLog.scrollHeight;
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (isTestMode && isTrained) {
+                const [nx, ny] = normalizeCoords(x, y);
+                const prediction = perceptron.predict([nx, ny]);
+                drawPoint(x, y, prediction, true);
+                logMessage(`Test point: (${nx.toFixed(2)}, ${ny.toFixed(2)}) → Class ${prediction}`, 'normal');
+            } else {
+                points.push({ x, y, class: currentClass });
+                redraw();
+                updateUI();
+                logMessage(`Added point: Class ${currentClass} at (${x}, ${y})`, 'normal');
+            }
+        });
+
+        classBlueBtn.addEventListener('click', () => {
+            currentClass = 0;
+            classBlueBtn.classList.add('active');
+            classRedBtn.classList.remove('active');
+            isTestMode = false;
+            testBtn.textContent = 'Test Mode';
+        });
+
+        classRedBtn.addEventListener('click', () => {
+            currentClass = 1;
+            classRedBtn.classList.add('active');
+            classBlueBtn.classList.remove('active');
+            isTestMode = false;
+            testBtn.textContent = 'Test Mode';
+        });
+
+        testBtn.addEventListener('click', () => {
+            if (!isTrained) {
+                logMessage('Train the perceptron first!', 'error');
+                return;
+            }
+            
+            isTestMode = !isTestMode;
+            testBtn.textContent = isTestMode ? 'Exit Test Mode' : 'Test Mode';
+            
+            if (isTestMode) {
+                classBlueBtn.classList.remove('active');
+                classRedBtn.classList.remove('active');
+                logMessage('Test mode activated. Click to test predictions.', 'success');
+            } else {
+                classBlueBtn.classList.add('active');
+                logMessage('Test mode deactivated.', 'normal');
+            }
+        });
+
+        trainBtn.addEventListener('click', () => {
+            if (points.length < 2) {
+                logMessage('Add at least 2 points to train!', 'error');
+                return;
+            }
+
+            const hasClass0 = points.some(p => p.class === 0);
+            const hasClass1 = points.some(p => p.class === 1);
+            
+            if (!hasClass0 || !hasClass1) {
+                logMessage('Add points from both classes!', 'error');
+                return;
+            }
+
+            trainingLog.innerHTML = '';
+            logMessage('Starting training...', 'normal');
+
+            const trainingData = points.map(point => {
+                const [nx, ny] = normalizeCoords(point.x, point.y);
+                return { inputs: [nx, ny], target: point.class };
+            });
+
+            perceptron = new Perceptron();
+            const trainingResults = perceptron.train(trainingData);
+            
+            trainingResults.forEach(result => {
+                if (result.message) {
+                    logMessage(result.message, result.type);
+                } else {
+                    logMessage(`Epoch ${result.epoch}: ${result.errors} errors, ${result.accuracy}% accuracy`, 
+                              result.errors === 0 ? 'success' : 'normal');
+                }
+            });
+
+            isTrained = true;
+            redraw();
+            updateUI();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            points = [];
+            perceptron = new Perceptron();
+            isTrained = false;
+            isTestMode = false;
+            testBtn.textContent = 'Test Mode';
+            currentClass = 0;
+            classBlueBtn.classList.add('active');
+            classRedBtn.classList.remove('active');
+            
+            trainingLog.innerHTML = '';
+            logMessage('Canvas cleared. Ready for new training data!', 'normal');
+            
+            redraw();
+            updateUI();
+        });
+
+        // Initialize
+        updateUI();
+        logMessage('Welcome! Add some points and start training.', 'success');
+    </script>
+</body>
+</html>
